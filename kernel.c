@@ -61,6 +61,10 @@ typedef struct {
 
 Game game;
 
+void kprint(const char *str);
+void kprint_newline(void);
+void clear_screen(void);
+
 struct IDT_entry {
 	unsigned short int offset_lowerbits;
 	unsigned short int selector;
