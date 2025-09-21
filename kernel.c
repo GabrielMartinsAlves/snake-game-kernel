@@ -17,7 +17,7 @@
 #define GAME_HEIGHT 22
 #define MAX_SNAKE_LENGTH 500
 #define INITIAL_SNAKE_LENGTH 3
-#define GAME_SPEED 5
+#define GAME_SPEED 10
 
 #define DIRECTION_UP 1
 #define DIRECTION_DOWN 2
@@ -75,7 +75,7 @@ struct IDT_entry {
 
 struct IDT_entry IDT[IDT_SIZE];
 
-unsigned int rand_seed = 12345;
+unsigned int rand_seed = 1;
 
 unsigned int simple_rand(void) {
     rand_seed = (rand_seed * 1103515245 + 12345) & 0x7fffffff;
@@ -309,6 +309,7 @@ void clear_screen(void)
 		vidptr[i++] = ' ';
 		vidptr[i++] = 0x07;
 	}
+	current_loc = 0;
 }
 
 void keyboard_handler_main(void)
@@ -415,7 +416,7 @@ void kmain(void)
 	
 	write_port(0x43, 0x36);
 	write_port(0x40, 0xFF);
-	write_port(0x40, 0xFF);
+	write_port(0x40, 0x00);
 	
 	write_port(0x21, 0xFC);
 
