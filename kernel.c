@@ -30,6 +30,7 @@
 
 extern unsigned char keyboard_map[128];
 extern void keyboard_handler(void);
+extern void timer_handler(void);
 extern char read_port(unsigned short port);
 extern void write_port(unsigned short port, unsigned char data);
 extern void load_idt(unsigned long *idt_ptr);
@@ -340,10 +341,9 @@ void keyboard_handler_main(void)
 						clear_screen();
 						init_game();
 						draw_border();
-						draw_game();
+						game.tick_counter = 0;
 					}
 					game.buffer_index = 0;
-					for (int i = 0; i < 10; i++) game.input_buffer[i] = 0;
 					kprint_newline();
 				} else if (game.buffer_index < 9) {
 					game.input_buffer[game.buffer_index++] = ch;
@@ -354,53 +354,41 @@ void keyboard_handler_main(void)
 		} else if (game.state == STATE_PLAYING) {
 			if (ch == 'w' && game.snake.direction != DIRECTION_DOWN) {
 				game.snake.direction = DIRECTION_UP;
-				update_snake();
-				draw_game();
-				if (game.state == STATE_GAME_OVER) {
-					clear_screen();
-					kprint("GAME OVER!");
-					kprint_newline();
-					kprint("Press ENTER to continue");
-				}
 			} else if (ch == 's' && game.snake.direction != DIRECTION_UP) {
 				game.snake.direction = DIRECTION_DOWN;
-				update_snake();
-				draw_game();
-				if (game.state == STATE_GAME_OVER) {
-					clear_screen();
-					kprint("GAME OVER!");
-					kprint_newline();
-					kprint("Press ENTER to continue");
-				}
 			} else if (ch == 'a' && game.snake.direction != DIRECTION_RIGHT) {
 				game.snake.direction = DIRECTION_LEFT;
-				update_snake();
-				draw_game();
-				if (game.state == STATE_GAME_OVER) {
-					clear_screen();
-					kprint("GAME OVER!");
-					kprint_newline();
-					kprint("Press ENTER to continue");
-				}
 			} else if (ch == 'd' && game.snake.direction != DIRECTION_LEFT) {
 				game.snake.direction = DIRECTION_RIGHT;
-				update_snake();
-				draw_game();
-				if (game.state == STATE_GAME_OVER) {
-					clear_screen();
-					kprint("GAME OVER!");
-					kprint_newline();
-					kprint("Press ENTER to continue");
-				}
 			}
 		} else if (game.state == STATE_GAME_OVER) {
 			if (keycode == ENTER_KEY_CODE) {
 				game.state = STATE_MENU;
 				game.buffer_index = 0;
-				for (int i = 0; i < 10; i++) game.input_buffer[i] = 0;
 				clear_screen();
 				kprint("Type 'start' to play Snake Game!");
 				kprint_newline();
+			}
+		}
+	}
+}
+
+void timer_handler_main(void) {
+	write_port(0x20, 0x20);
+	
+	if (game.state == STATE_PLAYING) {
+		game.tick_counter++;
+		
+		if (game.tick_counter >= GAME_SPEED) {
+			game.tick_counter = 0;
+			update_snake();
+			draw_game();
+			
+			if (game.state == STATE_GAME_OVER) {
+				set_cursor(GAME_WIDTH / 2 - 5, GAME_HEIGHT / 2);
+				kprint("GAME OVER!");
+				set_cursor(GAME_WIDTH / 2 - 10, GAME_HEIGHT / 2 + 2);
+				kprint("Press ENTER to continue");
 			}
 		}
 	}
@@ -414,12 +402,23 @@ void kmain(void)
 	
 	game.state = STATE_MENU;
 	game.buffer_index = 0;
-	
-	int i;
-	for (i = 0; i < 10; i++) game.input_buffer[i] = 0;
+	game.tick_counter = 0;
 
 	idt_init();
 	kb_init();
+	
+	unsigned long timer_address = (unsigned long)timer_handler_main;
+	IDT[0x20].offset_lowerbits = timer_address & 0xffff;
+	IDT[0x20].selector = KERNEL_CODE_SEGMENT_OFFSET;
+	IDT[0x20].zero = 0;
+	IDT[0x20].type_attr = INTERRUPT_GATE;
+	IDT[0x20].offset_higherbits = (timer_address & 0xffff0000) >> 16;
+	
+	write_port(0x43, 0x36);
+	write_port(0x40, 0xFF);
+	write_port(0x40, 0x00);
+	
+	write_port(0x21, 0xFC);
 
 	while(1);
 }
