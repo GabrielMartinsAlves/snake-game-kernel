@@ -1,22 +1,21 @@
 bits 32
-global start
 
-; ===================
-;  BOOTLOADER E INICIALIZAÇÃO (MULTIBOOT)
-; ===================
 ; Copyright (C) 2014  Arjun Sreedharan
 ; License: GPL version 2 or higher http://www.gnu.org/licenses/gpl.html
 
+; ===================
+;  HEADER DE RECONHECIMENTO MODO MULTIBOOT
+; ===================
 
 section .text
 		; Multiboot header para ser carregado por bootloaders como GRUB
 		align 4
 		dd 0x1BADB002              ; magic (identificador multiboot)
 		dd 0x00                    ; flags
-		dd - (0x1BADB002 + 0x00)   ; checksum. m+f+c deve ser zero
+		dd - (0x1BADB002 + 0x00)   ; checksum 
 
 ; ===================
-;  EXPORTAÇÃO DE SÍMBOLOS PARA O C
+;  EXPORTAÇÃO DE SÍMBOLOS PARA O C POR MEIO DO LINKER
 ; ===================
 global start
 global keyboard_handler
