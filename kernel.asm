@@ -11,14 +11,12 @@ section .text
 
 global start
 global keyboard_handler
-global timer_handler
 global read_port
 global write_port
 global load_idt
 
 extern kmain 		;this is defined in the c file
 extern keyboard_handler_main
-extern timer_handler_main
 
 read_port:
 	mov edx, [esp + 4]
@@ -40,10 +38,6 @@ load_idt:
 
 keyboard_handler:                 
 	call    keyboard_handler_main
-	iretd
-
-timer_handler:
-	call    timer_handler_main
 	iretd
 
 start:
